@@ -20,5 +20,6 @@ python3 manage.py update_md5_in_need
 
 ## delete duplicate file
 ```
+python3 manage.py delete_duplicate --no-act # check before you delete your file
 python3 manage.py delete_duplicate
 ```
