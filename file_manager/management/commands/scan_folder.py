@@ -21,6 +21,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         default_timezone = timezone.get_default_timezone()
+        add_cnt = 0
         for folder in Folder.objects.all():
             if kwargs.get("include"):
                 target = Path(folder.path) / kwargs.get("include")
@@ -34,11 +35,24 @@ class Command(BaseCommand):
                 update_datetime = datetime.datetime.fromtimestamp(stat.st_mtime).astimezone(
                     default_timezone,
                 )
-                File.objects.update_or_create(
+                file_obj = File.objects.filter(
                     folder=folder,
                     path=path.relative_to(folder.path),
-                    defaults={
-                        "size": stat.st_size,
-                        "update_datetime": update_datetime,
-                    },
-                )
+                ).first()
+                if file_obj is None:
+                    file_obj = File.objects.create(
+                        folder=folder,
+                        path=path.relative_to(folder.path),
+                        update_datetime=update_datetime,
+                        size=stat.st_size
+                    )
+                    add_cnt += 1
+                else:
+                    if (file_obj.size, file_obj.update_datetime) == (stat.st_size, update_datetime):
+                        continue
+                    file_obj.size = stat.st_size
+                    file_obj.update_datetime = update_datetime
+                    file_obj.md5 = ''
+                    file_obj.save()
+
+        self.stdout.write(self.style.HTTP_INFO(f"{add_cnt} file added"))
