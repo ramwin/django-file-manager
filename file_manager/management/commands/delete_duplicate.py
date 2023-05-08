@@ -23,8 +23,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         infos = list(
             File.objects.exclude(md5="").order_by(
-                "folder", "md5"
-            ).values("folder", "md5").annotate(count=Count("*")).filter(
+                "md5"
+            ).values("md5").annotate(count=Count("*")).filter(
                 count__gte=2
             )
         )
@@ -44,8 +44,7 @@ class Command(BaseCommand):
     @staticmethod
     def get_duplicate(info):
         queryset = File.objects.filter(
-            folder=info["folder"],
             md5=info["md5"],
-        )
+        ).order_by("foler", "update_datetime")
         remove_file, keep_file = list(queryset[0:2])
         return remove_file, keep_file

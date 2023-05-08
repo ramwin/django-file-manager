@@ -18,11 +18,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--include", help="only scan subdire")
+        parser.add_argument("--folder", help="only scan specificed foler")
 
     def handle(self, *args, **kwargs):
         default_timezone = timezone.get_default_timezone()
         add_cnt = 0
-        for folder in Folder.objects.all():
+        if kwargs["folder"]:
+            queryset = Folder.objects.filter(path=kwargs["folder"])
+            assert queryset.exists(), f'{kwargs["folder"]} was not managed'
+        else:
+            queryset = Folder.objects.all()
+        for folder in queryset:
             if kwargs.get("include"):
                 target = Path(folder.path) / kwargs.get("include")
                 self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))

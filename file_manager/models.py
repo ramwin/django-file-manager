@@ -13,8 +13,8 @@ class Folder(models.Model):
 class File(models.Model):
     folder = models.ForeignKey(Folder, on_delete=models.CASCADE)
     path = models.FilePathField("relative path to folder")
-    md5 = models.CharField(max_length=32)
-    size = models.IntegerField()
+    md5 = models.CharField(max_length=32, db_index=True)
+    size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()
 
     def __str__(self):
