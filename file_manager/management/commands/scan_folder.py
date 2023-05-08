@@ -16,10 +16,18 @@ class Command(BaseCommand):
 
     help = "scan file in folder, store info in File model"
 
+    def add_arguments(self, parser):
+        parser.add_argument("--include", help="only scan subdire")
+
     def handle(self, *args, **kwargs):
         default_timezone = timezone.get_default_timezone()
         for folder in Folder.objects.all():
-            for path in Path(folder.path).rglob("*"):
+            if kwargs.get("include"):
+                target = Path(folder.path) / kwargs.get("include")
+                self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))
+            else:
+                target = Path(folder.path)
+            for path in target.rglob("*"):
                 if path.is_dir():
                     continue
                 stat = path.stat()
