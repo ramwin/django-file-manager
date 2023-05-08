@@ -3,9 +3,18 @@ manage your file with a django app. It can remove the duplicate file
 
 # Usage
 
+## download
+```
+git clone git@github.com:ramwin/django-file-manager.git
+cd django-file-manager
+pip install -r ./requirements.txt
+python3 manage.py migrate
+```
+
 ## init a folder
 ```
 python3 manage.py init_folder <your directory>
+python3 manage.py init_folder <another directory>  # you can add multi foler
 ```
 
 ## scan file in folder, store info in File model
