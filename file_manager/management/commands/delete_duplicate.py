@@ -45,6 +45,8 @@ class Command(BaseCommand):
     def get_duplicate(info):
         queryset = File.objects.filter(
             md5=info["md5"],
-        ).order_by("foler", "update_datetime")
+        ).order_by("folder", "update_datetime")
         remove_file, keep_file = list(queryset[0:2])
+        assert remove_file.absolute().exists()
+        assert keep_file.absolute().exists()
         return remove_file, keep_file
