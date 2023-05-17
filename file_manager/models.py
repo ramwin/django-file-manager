@@ -1,9 +1,13 @@
+import logging
 from pathlib import Path
 import shutil
 
 from django.db import models
 from django.utils import timezone
 from .utils import backup, get_md5
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Bucket(models.Model):
@@ -65,9 +69,10 @@ class Backup(models.Model):
             ".dbfiles",
             timezone.now().strftime("%Y-%m-%d %H-%M-%S") + ".db"
         )
+        LOGGER.info("backup db to: %s", target)
         target.parent.mkdir(exist_ok=True,
                             parents=True)
-        assert not target.exists()
+        assert not target.exists(), target
         shutil.copy("db.sqlite3", target)
 
     def backup(self, max_size=1024) -> bool:
@@ -75,10 +80,10 @@ class Backup(models.Model):
         backup max max_size files.
         if all file in the self.bucket is backuped, return True
         """
-        self.backup_db()
         queryset = self.filter_un_backuped_files()
         if not queryset.exists():
             return True
+        LOGGER.info("backup %d/%s files", max_size, queryset.count())
         for file_obj in queryset[0:max_size]:
             self.sync_file(file_obj)
         self.backup_db()
