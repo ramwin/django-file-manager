@@ -67,7 +67,7 @@ class Backup(models.Model):
         target = Path(
             self.absolute(),
             ".dbfiles",
-            timezone.now().strftime("%Y-%m-%d %H-%M-%S") + ".db"
+            timezone.now().strftime("%Y-%m-%d %H-%M-%S-%f") + ".db"
         )
         LOGGER.info("backup db to: %s", target)
         target.parent.mkdir(exist_ok=True,
