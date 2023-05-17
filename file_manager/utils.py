@@ -25,10 +25,11 @@ def get_md5(path: Path) -> str:
 
 
 def get_hash_path(root: Path, filehash: str, suffix="") -> Path:
+    assert filehash
     directory = root / filehash[0:2]
     if directory.exists():
         return get_hash_path(directory, filehash[2:], suffix)
-    return root / filehash + suffix
+    return root / (filehash + suffix)
 
 
 def optimize(folder: Path):
@@ -63,5 +64,5 @@ def backup(path: Path, root: Path, filehash: str):
         LOGGER.error(error)
         raise Exception(error)
     shutil.copy(path, target)
-    if random.random() > 256:
+    if random.random() < 1/256:
         optimize(target.parent)

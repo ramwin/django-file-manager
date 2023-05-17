@@ -3,7 +3,7 @@ import shutil
 
 from django.db import models
 from django.utils import timezone
-from .utils import backup
+from .utils import backup, get_md5
 
 
 class Bucket(models.Model):
@@ -35,6 +35,11 @@ class File(models.Model):
     def absolute(self):
         return Path(self.folder.path) / self.path  # pylint: disable=no-member
 
+    def update_md5(self):
+        assert not self.md5
+        self.md5 = get_md5(self.absolute())
+        self.save()
+
 
 class Backup(models.Model):
     bucket = models.ForeignKey(
@@ -57,8 +62,8 @@ class Backup(models.Model):
     def backup_db(self):
         target = Path(
             self.absolute(),
-            "dbfiles",
-            timezone.now().strftime("%Y-%m-%d %H:%M:%S") + ".db"
+            ".dbfiles",
+            timezone.now().strftime("%Y-%m-%d %H-%M-%S") + ".db"
         )
         target.parent.mkdir(exist_ok=True,
                             parents=True)
@@ -80,6 +85,8 @@ class Backup(models.Model):
         return False
 
     def sync_file(self, file_obj):
+        if not file_obj.md5:
+            file_obj.update_md5()
         backup(file_obj.absolute(), self.absolute(),
                filehash=file_obj.md5)
         self.current_id = file_obj.id
