@@ -81,12 +81,13 @@ class Backup(models.Model):
         if all file in the self.bucket is backuped, return True
         """
         queryset = self.filter_un_backuped_files()
-        if not queryset.exists():
-            return True
-        LOGGER.info("backup %d/%s files", max_size, queryset.count())
+        remain = queryset.count()
+        LOGGER.info("backup %d/%s files", max_size, remain)
         for file_obj in queryset[0:max_size]:
             self.sync_file(file_obj)
         self.backup_db()
+        if remain <= max_size:
+            return True
         return False
 
     def sync_file(self, file_obj):

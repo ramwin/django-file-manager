@@ -4,12 +4,14 @@
 
 
 from django.core.management.base import BaseCommand
-from file_manager.models import Bucket, Backup
+from file_manager.models import Backup
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         for backup in Backup.objects.all():
-            while not backup.backup():
-                continue
+            while True:
+                result = backup.backup()
+                if result is True:
+                    break
