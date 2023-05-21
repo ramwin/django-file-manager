@@ -180,7 +180,7 @@ class Backup(models.Model):
     def sync_file(self, file_obj):
         if not file_obj.md5:
             file_obj.update_md5()
-        LOGGER.info("backup file %s => %s/%s", file_obj.absolute(), self.absolute(), file_obj.md5)
+        LOGGER.debug("backup file %s => %s/%s", file_obj.absolute(), self.absolute(), file_obj.md5)
         hashfs = HashFS(root=self.absolute(), algorithm="md5")
         hashfs.put_file(file_obj.absolute(), hashid=file_obj.md5)
         self.current_id = file_obj.id

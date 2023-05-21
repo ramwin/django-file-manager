@@ -47,6 +47,6 @@ class Command(BaseCommand):
             md5=info["md5"],
         ).order_by("folder", "update_datetime")
         remove_file, keep_file = list(queryset[0:2])
-        assert remove_file.absolute().exists()
-        assert keep_file.absolute().exists()
+        assert remove_file.absolute().exists(), remove_file.absolute()
+        assert keep_file.absolute().exists(), keep_file.absolute()
         return remove_file, keep_file

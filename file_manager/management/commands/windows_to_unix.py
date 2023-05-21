@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         while True:
-            qs = Object.objects.filter(path__contains="\\", md5="")
+            qs = Object.objects.filter(path__contains="\\")
             if not qs.exists():
                 return
             for i in qs[0:1000]:
@@ -30,6 +30,9 @@ class Command(BaseCommand):
                     i.path = Path(i.path).as_posix()
                     i.save()
                     continue
+                if not unix_object.md5 and i.md5:
+                    unix_object.md5 = i.md5
+                    unix_object.save()
                 assert unix_object.id != i.id
                 i.delete()
             LOGGER.info("delete 1000 duplicate data, last one was: %s", i)

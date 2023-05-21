@@ -9,7 +9,6 @@ from pathlib import Path
 import time
 
 from django.core.management.base import BaseCommand
-from django.core.management import call_command
 from django.db.models import Q
 from django.utils import timezone
 
@@ -23,19 +22,19 @@ ONLY_CHECK_BEFORE = timezone.now() - datetime.timedelta(days=1)
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument("timeout", type=int, default=60)
+        parser.add_argument("--timeout", type=int, default=60)
 
     def handle(self, *args, **kwargs):
         timeout = kwargs["timeout"]
         start = time.time()
         while time.time() - start < timeout:
 
-            need_continue = False
+            continue_reason = ""
 
             no_parent_folder_qs = Object.objects.filter(
                 parent=None).exclude(path=".")
             if no_parent_folder_qs.exists():
-                need_continue = True
+                continue_reason = "exist file with no parent"
                 for no_parent_folder in no_parent_folder_qs[0:100]:
                     no_parent_folder.scan()
 
@@ -44,7 +43,7 @@ class Command(BaseCommand):
                 | Q(last_scan=None)
             ).order_by("last_scan")
             if queryset.exists():
-                need_continue = True
+                continue_reason = "exit folder need scan"
             for obj in queryset[0:100]:
                 LOGGER.info("re scan %s", obj.absolute())
                 obj.scan()
@@ -57,8 +56,9 @@ class Command(BaseCommand):
 
             for backup in Backup.objects.all():
                 result = backup.backup(max_size=128)
-                if result is True:
-                    need_continue = True
+                if result is not True:
+                    continue_reason = "exist back up not complete"
 
-            if not need_continue:
+            if not continue_reason:
                 break
+            LOGGER.info("keep loop because: %s", continue_reason)
