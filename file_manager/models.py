@@ -1,11 +1,15 @@
-import datetime
+# pylint: disable=no-member
+
 import logging
 from pathlib import Path
 import shutil
 
 from django.db import models
 from django.utils import timezone
-from .utils import backup, get_md5, timestamp2datetime
+
+from hashfs import HashFS
+
+from .utils import get_md5, timestamp2datetime
 
 
 LOGGER = logging.getLogger(__name__)
@@ -175,8 +179,8 @@ class Backup(models.Model):
     def sync_file(self, file_obj):
         if not file_obj.md5:
             file_obj.update_md5()
-        backup(file_obj.absolute(), self.absolute(),
-               filehash=file_obj.md5)
+        hashfs = HashFS(root=self.absolute(), algorithm="md5")
+        hashfs.put_file(file_obj.absolute(), hashid=file_obj.md5)
         self.current_id = file_obj.id
         self.cnt += 1
         self.save()

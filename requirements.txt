@@ -1,1 +1,2 @@
 django
+hashfs-dev@git+https://github.com/ramwin/hashfs
