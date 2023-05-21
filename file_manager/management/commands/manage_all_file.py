@@ -16,7 +16,7 @@ from file_manager.models import Object, RootFolder, Backup
 
 
 LOGGER = logging.getLogger(__name__)
-ONLY_CHECK_BEFORE = timezone.now() - datetime.timedelta(days=1)
+ONLY_CHECK_BEFORE = timezone.now() - datetime.timedelta(days=7)
 
 
 class Command(BaseCommand):
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 parent=None).exclude(path=".")
             if no_parent_folder_qs.exists():
                 continue_reason = "exist file with no parent"
-                for no_parent_folder in no_parent_folder_qs[0:100]:
+                for no_parent_folder in no_parent_folder_qs[0:1000]:
                     no_parent_folder.scan()
 
             queryset = Object.objects.filter(
@@ -44,7 +44,7 @@ class Command(BaseCommand):
             ).order_by("last_scan")
             if queryset.exists():
                 continue_reason = "exit folder need scan"
-            for obj in queryset[0:100]:
+            for obj in queryset[0:1000]:
                 LOGGER.info("re scan %s", obj.absolute())
                 obj.scan()
 
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 )
 
             for backup in Backup.objects.all():
-                result = backup.backup(max_size=128)
+                result = backup.backup(max_size=1024)
                 if result is not True:
                     continue_reason = "exist back up not complete"
 
