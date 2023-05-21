@@ -24,7 +24,7 @@ class Command(BaseCommand):
             folder_path = Path(folder_path)
             assert folder_path.is_dir()
             folder, created = RootFolder.objects.get_or_create(
-                path=folder_path.absolute())
+                path=folder_path.absolute().as_posix())
             if created is False:
                 self.stdout.write(
                     self.style.WARNING(f"{folder_path} already exists"))

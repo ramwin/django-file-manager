@@ -52,11 +52,11 @@ class Object(models.Model):
     parent = models.ForeignKey("self", null=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
-        return f"Object: {self.folder}/{self.path}"
+        return f"Object[{self.id}]: {self.folder}/{self.path}"
 
     @classmethod
     def get_or_create_from_path(cls, folder, path: Path):
-        rel_path = path.relative_to(folder.absolute())
+        rel_path = path.relative_to(folder.absolute()).as_posix()
         LOGGER.info("create path: %s, rel_path: %s", path, rel_path)
         if rel_path == Path("."):
             parent = None
@@ -91,7 +91,7 @@ class Object(models.Model):
                 self.update_md5()
         if self.is_dir:
             for child in path.iterdir():
-                rel_path = child.relative_to(self.folder.absolute())
+                rel_path = child.relative_to(self.folder.absolute()).as_posix()
                 try:
                     Object.objects.get(
                         folder=self.folder,
@@ -144,6 +144,7 @@ class Backup(models.Model):
         bucket_file_qs = Object.objects.filter(  # pylint: disable=no-member
             folder__bucket=self.bucket,
             id__gt=self.current_id,
+            is_file=True,
         )
         return bucket_file_qs.order_by("id")
 
@@ -179,6 +180,7 @@ class Backup(models.Model):
     def sync_file(self, file_obj):
         if not file_obj.md5:
             file_obj.update_md5()
+        LOGGER.info("backup file %s => %s/%s", file_obj.absolute(), self.absolute(), file_obj.md5)
         hashfs = HashFS(root=self.absolute(), algorithm="md5")
         hashfs.put_file(file_obj.absolute(), hashid=file_obj.md5)
         self.current_id = file_obj.id
