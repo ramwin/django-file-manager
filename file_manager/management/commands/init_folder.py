@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     self.style.SUCCESS(f"{folder} created"))
             Object.objects.get_or_create(
                 folder=folder,
-                path="./",
+                path=".",
                 is_file=False,
                 is_dir=True,
                 size=folder_path.stat().st_size,

@@ -1,10 +1,11 @@
+import datetime
 import logging
 from pathlib import Path
 import shutil
 
 from django.db import models
 from django.utils import timezone
-from .utils import backup, get_md5
+from .utils import backup, get_md5, timestamp2datetime
 
 
 LOGGER = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ class Bucket(models.Model):
     """
     name = models.CharField(unique=True, max_length=31)
 
+    def __str__(self):
+        return f"{self.id}: {self.name}"
+
 
 class RootFolder(models.Model):
     bucket = models.ForeignKey(
@@ -24,6 +28,9 @@ class RootFolder(models.Model):
 
     def __str__(self):
         return f"RootFolder: {self.path}"
+
+    def absolute(self):
+        return Path(self.path)
 
 
 class Object(models.Model):
@@ -37,11 +44,73 @@ class Object(models.Model):
     update_datetime = models.DateTimeField()
     is_file = models.BooleanField(default=True)
     is_dir = models.BooleanField(default=False)
-    last_scan = models.DateTimeField(null=True)
+    last_scan = models.DateTimeField(null=True, db_index=True)
     parent = models.ForeignKey("self", null=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return f"Object: {self.folder}/{self.path}"
+
+    @classmethod
+    def get_or_create_from_path(cls, folder, path: Path):
+        rel_path = path.relative_to(folder.absolute())
+        LOGGER.info("create path: %s, rel_path: %s", path, rel_path)
+        if rel_path == Path("."):
+            parent = None
+        else:
+            parent = cls.get_or_create_from_path(
+                folder=folder,
+                path=path.parent,
+            )
+        try:
+            return cls.objects.get(
+                folder=folder,
+                path=rel_path,
+            )
+        except cls.DoesNotExist:
+            info = path.stat()
+            return cls.objects.create(
+                folder=folder,
+                path=rel_path,
+                size=info.st_size,
+                update_datetime=timestamp2datetime(info.st_mtime),
+                is_file=False,
+                is_dir=True,
+                parent=parent,
+            )
+
+    def scan(self):
+        LOGGER.info("re scan: %s", self.absolute())
+        now = timezone.now()
+        path = self.absolute()
+        if self.is_file:
+            if self.size != path.stat().st_size or self.update_datetime != timestamp2datetime(path.stat().st_mtime):
+                self.update_md5()
+        if self.is_dir:
+            for child in path.iterdir():
+                rel_path = child.relative_to(self.folder.absolute())
+                try:
+                    Object.objects.get(
+                        folder=self.folder,
+                        path=rel_path,
+                    )
+                except Object.DoesNotExist:
+                    Object.objects.create(
+                        folder=self.folder,
+                        path=rel_path,
+                        parent=self,
+                        size=child.stat().st_size,
+                        update_datetime=timestamp2datetime(
+                           child.stat().st_mtime),
+                        is_file=child.is_file(),
+                        is_dir=child.is_dir(),
+                    )
+            if self.parent is None and (self.path != "."):
+                self.parent = self.get_or_create_from_path(
+                    folder=self.folder,
+                    path=self.absolute().parent,
+                )
+        self.last_scan = now
+        self.save()
 
     def absolute(self):
         return Path(self.folder.path) / self.path  # pylint: disable=no-member
@@ -51,6 +120,9 @@ class Object(models.Model):
         self.md5 = get_md5(self.absolute())
         self.save()
 
+    class Meta:
+        unique_together = (("folder", "path"), )
+
 
 class Backup(models.Model):
     bucket = models.ForeignKey(
@@ -59,6 +131,7 @@ class Backup(models.Model):
     current_id = models.IntegerField("Bigest synced id", default=0)
     current_update_datetime = models.DateTimeField("newest updated datetime", null=True)
     cnt = models.IntegerField(default=0)
+    last_scan = models.DateTimeField(null=True, db_index=True)
 
     def filter_un_backuped_files(self):
         """
@@ -94,6 +167,8 @@ class Backup(models.Model):
             self.sync_file(file_obj)
         self.backup_db()
         if remain <= max_size:
+            self.last_scan = timezone.now()
+            self.save()
             return True
         return False
 
@@ -108,3 +183,6 @@ class Backup(models.Model):
 
     def absolute(self):
         return Path(self.path).absolute()
+
+    def __str__(self):
+        return f"{self.id}: {self.bucket} back to {self.path}"

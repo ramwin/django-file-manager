@@ -3,11 +3,14 @@
 # Xiang Wang <ramwin@qq.com>
 
 
+import datetime
 import hashlib
 import logging
 from pathlib import Path
 import random
 import shutil
+
+from django.utils import timezone
 
 
 LOGGER = logging.getLogger(__name__)
@@ -66,3 +69,11 @@ def backup(path: Path, root: Path, filehash: str):
     shutil.copy(path, target)
     if random.random() < 1/256:
         optimize(target.parent)
+
+
+def timestamp2datetime(timestamp: float):
+    return datetime.datetime.fromtimestamp(
+        timestamp
+    ).astimezone(
+        timezone.get_default_timezone()
+    )
