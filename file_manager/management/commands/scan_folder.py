@@ -9,12 +9,12 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from file_manager.models import Folder, File
+from file_manager.models import RootFolder, Object
 
 
 class Command(BaseCommand):
 
-    help = "scan file in folder, store info in File model"
+    help = "scan file in folder, store info in Object model"
 
     def add_arguments(self, parser):
         parser.add_argument("--include", help="only scan subdire")
@@ -24,10 +24,10 @@ class Command(BaseCommand):
         default_timezone = timezone.get_default_timezone()
         add_cnt = 0
         if kwargs["folder"]:
-            queryset = Folder.objects.filter(path=kwargs["folder"])
+            queryset = RootFolder.objects.filter(path=kwargs["folder"])
             assert queryset.exists(), f'{kwargs["folder"]} was not managed'
         else:
-            queryset = Folder.objects.all()
+            queryset = RootFolder.objects.all()
         for folder in queryset:
             if kwargs.get("include"):
                 target = Path(folder.path) / kwargs.get("include")
@@ -41,12 +41,12 @@ class Command(BaseCommand):
                 update_datetime = datetime.datetime.fromtimestamp(stat.st_mtime).astimezone(
                     default_timezone,
                 )
-                file_obj = File.objects.filter(
+                file_obj = Object.objects.filter(
                     folder=folder,
                     path=path.relative_to(folder.path),
                 ).first()
                 if file_obj is None:
-                    file_obj = File.objects.create(
+                    file_obj = Object.objects.create(
                         folder=folder,
                         path=path.relative_to(folder.path),
                         update_datetime=update_datetime,

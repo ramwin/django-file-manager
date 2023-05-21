@@ -17,24 +17,31 @@ class Bucket(models.Model):
     name = models.CharField(unique=True, max_length=31)
 
 
-class Folder(models.Model):
+class RootFolder(models.Model):
     bucket = models.ForeignKey(
         Bucket, null=True, on_delete=models.DO_NOTHING)
     path = models.FilePathField(unique=True)
 
     def __str__(self):
-        return f"Folder: {self.path}"
+        return f"RootFolder: {self.path}"
 
 
-class File(models.Model):
-    folder = models.ForeignKey(Folder, on_delete=models.CASCADE)
+class Object(models.Model):
+    """
+    the Object works like a tree. every folder should contains a object whose parent is None
+    """
+    folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE)
     path = models.FilePathField("relative path to folder")
     md5 = models.CharField(max_length=32, db_index=True)
     size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()
+    is_file = models.BooleanField(default=True)
+    is_dir = models.BooleanField(default=False)
+    last_scan = models.DateTimeField(null=True)
+    parent = models.ForeignKey("self", null=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
-        return f"File: {self.folder}/{self.path}"
+        return f"Object: {self.folder}/{self.path}"
 
     def absolute(self):
         return Path(self.folder.path) / self.path  # pylint: disable=no-member
@@ -55,9 +62,9 @@ class Backup(models.Model):
 
     def filter_un_backuped_files(self):
         """
-        currently, only filter by id. so the file should never change
+        currently, only filter by id. so the Object should never change
         """
-        bucket_file_qs = File.objects.filter(  # pylint: disable=no-member
+        bucket_file_qs = Object.objects.filter(  # pylint: disable=no-member
             folder__bucket=self.bucket,
             id__gt=self.current_id,
         )
@@ -78,7 +85,7 @@ class Backup(models.Model):
     def backup(self, max_size=1024) -> bool:
         """
         backup max max_size files.
-        if all file in the self.bucket is backuped, return True
+        if all Object in the self.bucket is backuped, return True
         """
         queryset = self.filter_un_backuped_files()
         remain = queryset.count()

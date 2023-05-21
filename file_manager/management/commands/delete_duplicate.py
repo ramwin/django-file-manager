@@ -11,7 +11,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.db.models import Count
 
-from file_manager.models import File
+from file_manager.models import Object
 from file_manager.utils import get_md5
 
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         infos = list(
-            File.objects.exclude(md5="").order_by(
+            Object.objects.exclude(md5="").order_by(
                 "md5"
             ).values("md5").annotate(count=Count("*")).filter(
                 count__gte=2
@@ -43,7 +43,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_duplicate(info):
-        queryset = File.objects.filter(
+        queryset = Object.objects.filter(
             md5=info["md5"],
         ).order_by("folder", "update_datetime")
         remove_file, keep_file = list(queryset[0:2])

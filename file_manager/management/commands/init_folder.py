@@ -3,11 +3,13 @@
 # Xiang Wang <ramwin@qq.com>
 
 
+import datetime
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
-from file_manager.models import Folder
+from file_manager.models import RootFolder, Object
 
 
 class Command(BaseCommand):
@@ -20,7 +22,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         for folder_path in kwargs["folders"]:
             folder_path = Path(folder_path)
-            folder, created = Folder.objects.get_or_create(
+            assert folder_path.is_dir()
+            folder, created = RootFolder.objects.get_or_create(
                 path=folder_path.absolute())
             if created is False:
                 self.stdout.write(
@@ -28,3 +31,13 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(
                     self.style.SUCCESS(f"{folder} created"))
+            Object.objects.get_or_create(
+                folder=folder,
+                path="./",
+                is_file=False,
+                is_dir=True,
+                size=folder_path.stat().st_size,
+                update_datetime=datetime.datetime.fromtimestamp(
+                    folder_path.stat().st_mtime).astimezone(
+                        timezone.get_default_timezone())
+            )
