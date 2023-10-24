@@ -28,7 +28,7 @@ class Bucket(models.Model):
 class RootFolder(models.Model):
     bucket = models.ForeignKey(
         Bucket, null=True, on_delete=models.DO_NOTHING)
-    path = models.FilePathField(unique=True)
+    windows_path = models.FilePathField(unique=True)
 
     def __str__(self):
         return f"RootFolder: {self.path}"
