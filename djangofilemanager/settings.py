@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "django_commands",
     'file_manager',
 ]
 
@@ -187,6 +188,11 @@ LOGGING = {
             'level': "INFO",
         },
         'file_manager': {
+            'handlers': ['debug_file', 'info_file',
+                         'warning_file', 'error_file', 'console'],
+            'level': "INFO",
+        },
+        'django_commands': {
             'handlers': ['debug_file', 'info_file',
                          'warning_file', 'error_file', 'console'],
             'level': "INFO",

@@ -59,7 +59,7 @@ class Object(models.Model):
     is_file = models.BooleanField(default=True)
     is_dir = models.BooleanField(default=False)
     last_scan = models.DateTimeField(null=True, db_index=True)
-    parent = models.ForeignKey("self", null=True, on_delete=models.DO_NOTHING)
+    parent = models.ForeignKey("self", null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Object[{self.id}]: {self.folder}/{self.path}"

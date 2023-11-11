@@ -1,2 +1,3 @@
 django
 hashfs2
+django-commands

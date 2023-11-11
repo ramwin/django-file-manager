@@ -5,6 +5,17 @@ manage your file with a django app. It can remove the duplicate file
 * [x] backup multi directory
 * [x] delete duplicate file(by md5)
 
+# Concept
+
+## Object
+Any file or directory is an object in database
+
+## RootFolder
+specific which folder should this project scan
+
+## Bucket
+a bucket means an isolate file storage.
+
 # Usage
 
 ## download
