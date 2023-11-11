@@ -1,4 +1,4 @@
-# pylint: disable=no-member
+# pylint: disable=no-member, missing-function-docstring, missing-module-docstring
 
 import logging
 import shutil
@@ -36,12 +36,13 @@ class RootFolder(models.Model):
         return f"RootFolder: {self.path}"
 
     def absolute(self):
-        return Path(self.path)
+        return self.path.absolute()
 
-    def path(self):
-        if platform.platform() == "Windows":
+    @property
+    def path(self) -> Path:
+        if platform.system() == "Windows":
             return Path(self.windows_path)
-        if platform.platform() == "Linux":
+        if platform.system() == "Linux":
             return Path(self.linux_path)
         raise NotImplementedError
 
@@ -96,7 +97,8 @@ class Object(models.Model):
         now = timezone.now()
         path = self.absolute()
         if self.is_file:
-            if self.size != path.stat().st_size or self.update_datetime != timestamp2datetime(path.stat().st_mtime):
+            if self.size != path.stat().st_size\
+                    or self.update_datetime != timestamp2datetime(path.stat().st_mtime):
                 self.update_md5()
         if self.is_dir:
             for child in path.iterdir():
