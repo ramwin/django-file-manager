@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 target = Path(folder.path) / kwargs.get("include")
                 self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))
             else:
-                target = Path(folder.path)
+                target = folder.absolute()
             for path in target.rglob("*"):
                 if path.is_dir():
                     continue

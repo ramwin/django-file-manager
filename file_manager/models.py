@@ -1,8 +1,9 @@
 # pylint: disable=no-member
 
 import logging
-from pathlib import Path
 import shutil
+import platform
+from pathlib import Path
 
 from django.db import models
 from django.utils import timezone
@@ -28,13 +29,21 @@ class Bucket(models.Model):
 class RootFolder(models.Model):
     bucket = models.ForeignKey(
         Bucket, null=True, on_delete=models.DO_NOTHING)
-    windows_path = models.FilePathField(unique=True)
+    windows_path = models.FilePathField(unique=True, null=True)
+    linux_path = models.FilePathField(unique=True, null=True)
 
     def __str__(self):
         return f"RootFolder: {self.path}"
 
     def absolute(self):
         return Path(self.path)
+
+    def path(self):
+        if platform.platform() == "Windows":
+            return Path(self.windows_path)
+        if platform.platform() == "Linux":
+            return Path(self.linux_path)
+        raise NotImplementedError
 
 
 class Object(models.Model):
