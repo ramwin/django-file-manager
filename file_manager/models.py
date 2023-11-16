@@ -29,8 +29,8 @@ class Bucket(models.Model):
 class RootFolder(models.Model):
     bucket = models.ForeignKey(
         Bucket, null=True, on_delete=models.DO_NOTHING)
-    windows_path = models.FilePathField(unique=True, null=True)
-    linux_path = models.FilePathField(unique=True, null=True)
+    windows_path = models.TextField(unique=True, null=True)
+    linux_path = models.TextField(unique=True, null=True)
 
     def __str__(self):
         return f"RootFolder: {self.path}"
@@ -41,10 +41,14 @@ class RootFolder(models.Model):
     @property
     def path(self) -> Path:
         if platform.system() == "Windows":
-            return Path(self.windows_path)
-        if platform.system() == "Linux":
-            return Path(self.linux_path)
-        raise NotImplementedError
+            system_path = self.windows_path
+        elif platform.system() == "Linux":
+            system_path = self.linux_path
+        else:
+            raise NotImplementedError
+        if system_path is None:
+            raise Exception(f"please set path to rootfolder(id={self.id}) manually")
+        return Path(system_path)
 
 
 class Object(models.Model):
@@ -142,9 +146,9 @@ class Object(models.Model):
 class Backup(models.Model):
     bucket = models.ForeignKey(
         Bucket, on_delete=models.DO_NOTHING)
-    path = models.FilePathField(unique=True)
+    path = models.TextField(unique=True)
     current_id = models.IntegerField("Bigest synced id", default=0)
-    current_update_datetime = models.DateTimeField("newest updated datetime", null=True)
+    current_update_datetime = models.DateTimeField("newest updated datetime", null=True, blank=True)
     cnt = models.IntegerField(default=0)
     last_scan = models.DateTimeField(null=True, db_index=True)
 

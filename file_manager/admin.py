@@ -16,7 +16,7 @@ class BucketAdmin(admin.ModelAdmin):
 
 @admin.register(models.RootFolder)
 class RootFolderAdmin(admin.ModelAdmin):
-    list_display = ["id", "bucket", "windows_path"]
+    list_display = ["id", "bucket", "windows_path", "linux_path"]
 
 
 @admin.register(models.Object)

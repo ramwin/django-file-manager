@@ -1,5 +1,5 @@
 # django-file-manager
-manage your file with a django app. It can remove the duplicate file
+manage your file with a django app. It can remove the duplicate file, and backup your file
 
 # Features
 * [x] backup multi directory
