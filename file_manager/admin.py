@@ -22,7 +22,7 @@ class RootFolderAdmin(admin.ModelAdmin):
 @admin.register(models.Object)
 class ObjectAdmin(admin.ModelAdmin):
     list_display = ["id", "path", "size", "update_datetime", "folder"]
-    list_filter = ["is_dir", "folder__bucket"]
+    list_filter = ["is_dir", "folder__bucket", "folder"]
     search_fields = ["path"]
 
 

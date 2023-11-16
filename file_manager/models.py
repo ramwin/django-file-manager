@@ -56,7 +56,7 @@ class Object(models.Model):
     the Object works like a tree. every folder should contains a object whose parent is None
     """
     folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE)
-    path = models.FilePathField("relative path to folder")
+    path = models.TextField("relative path to folder")
     md5 = models.CharField(max_length=32, db_index=True)
     size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()
