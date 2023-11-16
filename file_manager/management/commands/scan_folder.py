@@ -4,6 +4,7 @@
 
 
 import datetime
+import platform
 from pathlib import Path
 
 from django.core.management.base import BaseCommand
@@ -18,13 +19,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--include", help="only scan subdire")
-        parser.add_argument("--folder", help="only scan specificed foler")
+        parser.add_argument("--folder", type=Path, help="only scan specificed foler")
 
     def handle(self, *args, **kwargs):
         default_timezone = timezone.get_default_timezone()
         add_cnt = 0
         if kwargs["folder"]:
-            queryset = RootFolder.objects.filter(path=kwargs["folder"])
+            if platform.system() == "Windows":
+                queryset = RootFolder.objects.filter(windows_path=kwargs["folder"].absolute())
+            elif platform.system() == "Linux":
+                queryset = RootFolder.objects.filter(linux_path=kwargs["folder"].absolute())
+            else:
+                raise NotImplementedError
             assert queryset.exists(), f'{kwargs["folder"]} was not managed'
         else:
             queryset = RootFolder.objects.all()

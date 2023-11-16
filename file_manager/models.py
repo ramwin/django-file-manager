@@ -29,8 +29,8 @@ class Bucket(models.Model):
 class RootFolder(models.Model):
     bucket = models.ForeignKey(
         Bucket, null=True, on_delete=models.DO_NOTHING)
-    windows_path = models.TextField(unique=True, null=True)
-    linux_path = models.TextField(unique=True, null=True)
+    windows_path = models.TextField(unique=True, null=True, blank=True)
+    linux_path = models.TextField(unique=True, null=True, blank=True)
 
     def __str__(self):
         return f"RootFolder: {self.path}"
@@ -150,7 +150,7 @@ class Backup(models.Model):
     current_id = models.IntegerField("Bigest synced id", default=0)
     current_update_datetime = models.DateTimeField("newest updated datetime", null=True, blank=True)
     cnt = models.IntegerField(default=0)
-    last_scan = models.DateTimeField(null=True, db_index=True)
+    last_scan = models.DateTimeField(null=True, db_index=True, blank=True)
 
     def filter_un_backuped_files(self):
         """
