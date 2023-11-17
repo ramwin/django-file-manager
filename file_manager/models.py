@@ -6,6 +6,7 @@ import platform
 from pathlib import Path
 
 from django.db import models
+from django.db.models.signals import pre_delete
 from django.utils import timezone
 
 from hashfs import HashFS
@@ -47,7 +48,7 @@ class RootFolder(models.Model):
         else:
             raise NotImplementedError
         if system_path is None:
-            raise Exception(f"please set path to rootfolder(id={self.id}) manually")
+            raise ValueError(f"please set path to rootfolder(id={self.id}) manually")
         return Path(system_path)
 
 
@@ -142,6 +143,13 @@ class Object(models.Model):
     class Meta:
         unique_together = (("folder", "path"), )
 
+    @classmethod
+    def pre_delete(cls, instance, **kwargs):
+        if instance.is_dir:
+            instance.absolute().rmdir()
+        else:
+            instance.absolute().unlink()
+
 
 class Backup(models.Model):
     bucket = models.ForeignKey(
@@ -207,3 +215,6 @@ class Backup(models.Model):
 
     def __str__(self):
         return f"{self.id}: {self.bucket} back to {self.path}"
+
+
+pre_delete.connect(Object.pre_delete, Object)

@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from file_manager.models import RootFolder, Object
+from file_manager.utils import timestamp2datetime
 
 
 class Command(BaseCommand):
@@ -41,12 +42,19 @@ class Command(BaseCommand):
             else:
                 target = folder.absolute()
             for path in target.rglob("*"):
-                if path.is_dir():
-                    continue
                 stat = path.stat()
-                update_datetime = datetime.datetime.fromtimestamp(stat.st_mtime).astimezone(
-                    default_timezone,
-                )
+                update_datetime = timestamp2datetime(stat.st_mtime)
+                if path.is_dir():
+                    Object.objects.update_or_create(
+                            folder=folder,
+                            is_dir=True,
+                            path=path.relative_to(folder.path),
+                            defaults={
+                                "size": stat.st_size,
+                                "update_datetime": update_datetime,
+                            }
+                    )
+                    continue
                 file_obj = Object.objects.filter(
                     folder=folder,
                     path=path.relative_to(folder.path),
