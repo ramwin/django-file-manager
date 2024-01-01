@@ -65,7 +65,7 @@ class Object(models.Model):
     is_dir = models.BooleanField(default=False)
     last_scan = models.DateTimeField(null=True, db_index=True)
     parent = models.ForeignKey(
-            "self", null=True, on_delete=models.DO_NOTHING, related_name="children")
+            "self", null=True, on_delete=models.CASCADE, related_name="children")
 
     def __str__(self):
         return f"Object[{self.id}]: {self.folder}/{self.path}"
@@ -146,7 +146,9 @@ class Object(models.Model):
 
     @classmethod
     def pre_delete(cls, instance, **kwargs):
-        if instance.is_dir:
+        if not instance.absolute().exists():
+            return
+        if instance.absolute().is_dir:
             instance.absolute().rmdir()
         else:
             instance.absolute().unlink()
