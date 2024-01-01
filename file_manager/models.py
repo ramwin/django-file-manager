@@ -6,7 +6,7 @@ import platform
 from pathlib import Path
 
 from django.db import models
-from django.db.models.signals import pre_delete
+from django.db.models.signals import post_delete
 from django.utils import timezone
 
 from hashfs import HashFS
@@ -145,10 +145,10 @@ class Object(models.Model):
         unique_together = (("folder", "path"), )
 
     @classmethod
-    def pre_delete(cls, instance, **kwargs):
+    def post_delete(cls, instance, **kwargs):
         if not instance.absolute().exists():
             return
-        if instance.absolute().is_dir:
+        if instance.absolute().is_dir():
             instance.absolute().rmdir()
         else:
             instance.absolute().unlink()
@@ -243,4 +243,4 @@ class Backup(models.Model):
         )
 
 
-pre_delete.connect(Object.pre_delete, Object)
+post_delete.connect(Object.post_delete, Object)
