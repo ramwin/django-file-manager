@@ -64,7 +64,8 @@ class Object(models.Model):
     is_file = models.BooleanField(default=True)
     is_dir = models.BooleanField(default=False)
     last_scan = models.DateTimeField(null=True, db_index=True)
-    parent = models.ForeignKey("self", null=True, on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+            "self", null=True, on_delete=models.DO_NOTHING, related_name="children")
 
     def __str__(self):
         return f"Object[{self.id}]: {self.folder}/{self.path}"
@@ -150,6 +151,22 @@ class Object(models.Model):
         else:
             instance.absolute().unlink()
 
+    def rm_backup(self):
+        """
+        delete all backup according it's md5
+        and delete all backup of it's children
+        """
+        for child in list(self.children.all()):
+            child.rm_backup()
+        if self.is_file:
+            if Object.objects.filter(folder__bucket=self.folder.bucket, md5=self.md5).count() >= 2:
+                return
+            for backup in Backup.objects.filter(
+                    bucket=self.folder.bucket):
+                backup.hashfs.delete(
+                    self.md5,
+                )
+
 
 class Backup(models.Model):
     bucket = models.ForeignKey(
@@ -215,6 +232,13 @@ class Backup(models.Model):
 
     def __str__(self):
         return f"{self.id}: {self.bucket} back to {self.path}"
+
+    @property
+    def hashfs(self):
+        return HashFS(
+            root=self.absolute(), algorithm="md5",
+            sub_directory_created=True,
+        )
 
 
 pre_delete.connect(Object.pre_delete, Object)
