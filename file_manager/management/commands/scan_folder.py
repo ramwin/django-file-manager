@@ -21,10 +21,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--include", help="only scan subdire")
         parser.add_argument("--folder", type=Path, help="only scan specificed foler")
+        parser.add_argument("--depth", type=int, help="max scan depth")
 
     def handle(self, *args, **kwargs):
         default_timezone = timezone.get_default_timezone()
-        add_cnt = 0
         if kwargs["folder"]:
             if platform.system() == "Windows":
                 queryset = RootFolder.objects.filter(windows_path=kwargs["folder"].absolute())
@@ -41,38 +41,51 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))
             else:
                 target = folder.absolute()
-            for path in target.rglob("*"):
-                stat = path.stat()
-                update_datetime = timestamp2datetime(stat.st_mtime)
-                if path.is_dir():
-                    Object.objects.update_or_create(
-                            folder=folder,
-                            is_dir=True,
-                            path=path.relative_to(folder.path),
-                            defaults={
-                                "size": stat.st_size,
-                                "update_datetime": update_datetime,
-                            }
-                    )
-                    continue
-                file_obj = Object.objects.filter(
+            self.scan(folder, target, kwargs["depth"])
+
+    def scan(self, root_folder: RootFolder, scan_path: Path, remain_depth: int, parent_object=None):
+        if remain_depth == 0:
+            return
+        for path in scan_path.iterdir():
+            stat = path.stat()
+            update_datetime = timestamp2datetime(stat.st_mtime)
+            if path.is_dir():
+                parent_object, _ = Object.objects.update_or_create(
+                        folder=root_folder,
+                        is_dir=True,
+                        path=path.relative_to(folder.path),
+                        defaults={
+                            "size": stat.st_size,
+                            "update_datetime": update_datetime,
+                        }
+                )
+                self.scan(
+                        root_folder=root_folder,
+                        scan_path=path,
+                        remain_depth=remain_depth-1,
+                        parent_object=parent_object
+                )
+                continue
+
+            file_obj = Object.objects.filter(
+                folder=folder,
+                path=path.relative_to(folder.path),
+            ).first()
+            if file_obj is None:
+                file_obj = Object.objects.create(
                     folder=folder,
                     path=path.relative_to(folder.path),
-                ).first()
-                if file_obj is None:
-                    file_obj = Object.objects.create(
-                        folder=folder,
-                        path=path.relative_to(folder.path),
-                        update_datetime=update_datetime,
-                        size=stat.st_size
-                    )
-                    add_cnt += 1
-                else:
-                    if (file_obj.size, file_obj.update_datetime) == (stat.st_size, update_datetime):
-                        continue
-                    file_obj.size = stat.st_size
-                    file_obj.update_datetime = update_datetime
-                    file_obj.md5 = ''
+                    update_datetime=update_datetime,
+                    size=stat.st_size,
+                    parent=parent_object,
+                )
+            else:
+                if parent_object and not file_obj.parent:
+                    file_obj.parent = parent_object
                     file_obj.save()
-
-        self.stdout.write(self.style.HTTP_INFO(f"{add_cnt} file added"))
+                if (file_obj.size, file_obj.update_datetime) == (stat.st_size, update_datetime):
+                    continue
+                file_obj.size = stat.st_size
+                file_obj.update_datetime = update_datetime
+                file_obj.md5 = ''
+                file_obj.save()
