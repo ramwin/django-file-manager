@@ -1,3 +1,4 @@
 django
 hashfs2>=1.0.1
 django-commands
+django-mptt

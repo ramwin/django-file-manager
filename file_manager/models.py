@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from hashfs import HashFS
 
+from mptt.models import MPTTModel, TreeForeignKey
 from .utils import get_md5, timestamp2datetime
 
 
@@ -52,7 +53,7 @@ class RootFolder(models.Model):
         return Path(system_path)
 
 
-class Object(models.Model):
+class Object(MPTTModel):
     """
     the Object works like a tree. every folder should contains a object whose parent is None
     """
@@ -64,7 +65,7 @@ class Object(models.Model):
     is_file = models.BooleanField(default=True)
     is_dir = models.BooleanField(default=False)
     last_scan = models.DateTimeField(null=True, db_index=True)
-    parent = models.ForeignKey(
+    parent = TreeForeignKey(
             "self", null=True, on_delete=models.CASCADE, related_name="children")
 
     def __str__(self):
@@ -140,6 +141,9 @@ class Object(models.Model):
         assert not self.md5
         self.md5 = get_md5(self.absolute())
         self.save()
+
+    class MPTTMeta:
+        order_insertion_by = ["name"]
 
     class Meta:
         unique_together = (("folder", "path"), )
