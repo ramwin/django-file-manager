@@ -24,7 +24,6 @@ class Command(BaseCommand):
         parser.add_argument("--depth", type=int, help="max scan depth")
 
     def handle(self, *args, **kwargs):
-        default_timezone = timezone.get_default_timezone()
         if kwargs["folder"]:
             if platform.system() == "Windows":
                 queryset = RootFolder.objects.filter(windows_path=kwargs["folder"].absolute())
@@ -50,10 +49,10 @@ class Command(BaseCommand):
             stat = path.stat()
             update_datetime = timestamp2datetime(stat.st_mtime)
             if path.is_dir():
-                parent_object, _ = Object.objects.update_or_create(
+                next_parent_object, _ = Object.objects.update_or_create(
                         folder=root_folder,
                         is_dir=True,
-                        path=path.relative_to(folder.path),
+                        path=path.relative_to(root_folder.path),
                         defaults={
                             "size": stat.st_size,
                             "update_datetime": update_datetime,
@@ -63,18 +62,18 @@ class Command(BaseCommand):
                         root_folder=root_folder,
                         scan_path=path,
                         remain_depth=remain_depth-1,
-                        parent_object=parent_object
+                        parent_object=next_parent_object
                 )
                 continue
 
             file_obj = Object.objects.filter(
-                folder=folder,
-                path=path.relative_to(folder.path),
+                folder=root_folder,
+                path=path.relative_to(root_folder.path),
             ).first()
             if file_obj is None:
                 file_obj = Object.objects.create(
-                    folder=folder,
-                    path=path.relative_to(folder.path),
+                    folder=root_folder,
+                    path=path.relative_to(root_folder.path),
                     update_datetime=update_datetime,
                     size=stat.st_size,
                     parent=parent_object,

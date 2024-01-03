@@ -143,7 +143,7 @@ class Object(MPTTModel):
         self.save()
 
     class MPTTMeta:
-        order_insertion_by = ["name"]
+        order_insertion_by = ["path"]
 
     class Meta:
         unique_together = (("folder", "path"), )

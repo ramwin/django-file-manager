@@ -6,6 +6,8 @@ admin config
 
 from django.contrib import admin
 
+from mptt.admin import MPTTModelAdmin
+
 from . import models
 
 
@@ -20,11 +22,12 @@ class RootFolderAdmin(admin.ModelAdmin):
 
 
 @admin.register(models.Object)
-class ObjectAdmin(admin.ModelAdmin):
+class ObjectAdmin(MPTTModelAdmin):
     list_display = ["id", "path", "size", "update_datetime", "folder"]
     list_filter = ["is_dir", "folder__bucket", "folder"]
     readonly_fields = ["last_scan", "parent"]
     search_fields = ["path"]
+    mptt_level_indent = 4
 
 
 @admin.register(models.Backup)
