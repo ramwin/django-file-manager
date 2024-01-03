@@ -40,7 +40,8 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))
             else:
                 target = folder.absolute()
-            self.scan(folder, target, kwargs["depth"])
+            if target.exists():
+                self.scan(folder, target, kwargs["depth"])
 
     def scan(self, root_folder: RootFolder, scan_path: Path, remain_depth: int, parent_object=None):
         if remain_depth == 0:
