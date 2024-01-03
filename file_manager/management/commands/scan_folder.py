@@ -54,13 +54,14 @@ class Command(BaseCommand):
             return
         LOGGER.info("scan %s", scan_path)
         for path in scan_path.iterdir():
+            path_str = str(path.relative_to(root_folder.path)).replace("\\", "/")
             stat = path.stat()
             update_datetime = timestamp2datetime(stat.st_mtime)
             if path.is_dir():
                 next_parent_object, _ = Object.objects.update_or_create(
                         folder=root_folder,
                         is_dir=True,
-                        path=path.relative_to(root_folder.path),
+                        path=path_str,
                         defaults={
                             "size": stat.st_size,
                             "update_datetime": update_datetime,
@@ -77,12 +78,12 @@ class Command(BaseCommand):
 
             file_obj = Object.objects.filter(
                 folder=root_folder,
-                path=path.relative_to(root_folder.path),
+                path=path_str,
             ).first()
             if file_obj is None:
                 file_obj = Object.objects.create(
                     folder=root_folder,
-                    path=path.relative_to(root_folder.path),
+                    path=path_str,
                     update_datetime=update_datetime,
                     size=stat.st_size,
                     parent=parent_object,
