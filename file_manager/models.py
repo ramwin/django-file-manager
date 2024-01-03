@@ -59,6 +59,7 @@ class Object(MPTTModel):
     """
     folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE)
     path = models.TextField("relative path to folder")
+    name = models.CharField(max_length=255, db_index=True, null=True)
     md5 = models.CharField(max_length=32, db_index=True)
     size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()
@@ -99,7 +100,7 @@ class Object(MPTTModel):
                 parent=parent,
             )
 
-    def scan(self):
+    def scan(self, recursive=True):
         LOGGER.info("re scan: %s", self.absolute())
         now = timezone.now()
         path = self.absolute()
@@ -108,24 +109,25 @@ class Object(MPTTModel):
                     or self.update_datetime != timestamp2datetime(path.stat().st_mtime):
                 self.update_md5()
         if self.is_dir:
-            for child in path.iterdir():
-                rel_path = child.relative_to(self.folder.absolute()).as_posix()
-                try:
-                    Object.objects.get(
-                        folder=self.folder,
-                        path=rel_path,
-                    )
-                except Object.DoesNotExist:
-                    Object.objects.create(
-                        folder=self.folder,
-                        path=rel_path,
-                        parent=self,
-                        size=child.stat().st_size,
-                        update_datetime=timestamp2datetime(
-                           child.stat().st_mtime),
-                        is_file=child.is_file(),
-                        is_dir=child.is_dir(),
-                    )
+            if recursive:
+                for child in path.iterdir():
+                    rel_path = child.relative_to(self.folder.absolute()).as_posix()
+                    try:
+                        Object.objects.get(
+                            folder=self.folder,
+                            path=rel_path,
+                        )
+                    except Object.DoesNotExist:
+                        Object.objects.create(
+                            folder=self.folder,
+                            path=rel_path,
+                            parent=self,
+                            size=child.stat().st_size,
+                            update_datetime=timestamp2datetime(
+                               child.stat().st_mtime),
+                            is_file=child.is_file(),
+                            is_dir=child.is_dir(),
+                        )
             if self.parent is None and (self.path != "."):
                 self.parent = self.get_or_create_from_path(
                     folder=self.folder,
@@ -146,7 +148,7 @@ class Object(MPTTModel):
         order_insertion_by = ["path"]
 
     class Meta:
-        unique_together = (("folder", "path"), )
+        unique_together = (("folder", "path"), ("parent", "name"))
 
     @classmethod
     def post_delete(cls, instance, **kwargs):

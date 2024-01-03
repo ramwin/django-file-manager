@@ -35,7 +35,7 @@ def clean_backup_file(modeladmin, request, queryset):
 
 @admin.register(models.Object)
 class ObjectAdmin(MPTTModelAdmin):
-    list_display = ["id", "path", "size", "update_datetime", "folder"]
+    list_display = ["id", "path", "size", "update_datetime", "md5", "folder"]
     list_filter = ["is_dir", "folder__bucket", "folder"]
     readonly_fields = ["last_scan", "parent"]
     search_fields = ["path"]

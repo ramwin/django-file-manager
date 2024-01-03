@@ -4,6 +4,7 @@
 
 
 import datetime
+import logging
 import platform
 from pathlib import Path
 
@@ -14,6 +15,9 @@ from file_manager.models import RootFolder, Object
 from file_manager.utils import timestamp2datetime
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class Command(BaseCommand):
 
     help = "scan file in folder, store info in Object model"
@@ -21,7 +25,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--include", help="only scan subdire")
         parser.add_argument("--folder", type=Path, help="only scan specificed foler")
-        parser.add_argument("--depth", type=int, help="max scan depth")
+        parser.add_argument("--depth", type=int, help="max scan depth", default=-1)
 
     def handle(self, *args, **kwargs):
         if kwargs["folder"]:
@@ -37,15 +41,18 @@ class Command(BaseCommand):
         for folder in queryset:
             if kwargs.get("include"):
                 target = Path(folder.path) / kwargs.get("include")
-                self.stdout.write(self.style.HTTP_INFO(f"Only scan {target}"))
             else:
                 target = folder.absolute()
             if target.exists():
                 self.scan(folder, target, kwargs["depth"])
+            else:
+                LOGGER.info("%s does not exist, skip scan", target)
 
     def scan(self, root_folder: RootFolder, scan_path: Path, remain_depth: int, parent_object=None):
         if remain_depth == 0:
+            LOGGER.info("max depth reached, skip scan: %s", scan_path)
             return
+        LOGGER.info("scan %s", scan_path)
         for path in scan_path.iterdir():
             stat = path.stat()
             update_datetime = timestamp2datetime(stat.st_mtime)
@@ -57,6 +64,7 @@ class Command(BaseCommand):
                         defaults={
                             "size": stat.st_size,
                             "update_datetime": update_datetime,
+                            "parent": parent_object,
                         }
                 )
                 self.scan(
