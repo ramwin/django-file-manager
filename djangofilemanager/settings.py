@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django_commands",
     'file_manager',
     'mptt',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
