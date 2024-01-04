@@ -28,7 +28,7 @@ class BackupDeleteTest(TestCase):
         )
         self.TEST_DIRECTORY.joinpath(
                 "root_folder", "README.md").write_text(
-                        "README.md", encoding="UTF-8")
+                        "README.md\n", encoding="UTF-8")
         call_command("scan_folder")
         Backup.objects.create(
                 bucket=bucket,
@@ -38,8 +38,9 @@ class BackupDeleteTest(TestCase):
 
     def test_delete_backup(self):
         self.assertEqual(Object.objects.count(), 1)
+        self.assertTrue(Object.objects.last().is_file)
         md5 = hashlib.md5()
-        md5.update(b"README.md")
+        md5.update(b"README.md\n")
         backup = Backup.objects.get()
         hash_address = backup.hashfs.get(md5.hexdigest())
         self.assertIsNotNone(hash_address)

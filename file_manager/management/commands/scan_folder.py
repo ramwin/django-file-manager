@@ -106,8 +106,8 @@ class Command(BaseCommand):
                     update_datetime=update_datetime,
                     size=stat.st_size,
                     parent=parent_object,
-                    is_dir=True,
-                    is_file=False,
+                    is_dir=False,
+                    is_file=True,
                     name=path.name,
                 )
             else:
