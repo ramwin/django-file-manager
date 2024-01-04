@@ -17,11 +17,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_md5(path: Path) -> str:
-    CHUNK_SIZE = 4 * 1024 * 1024
+    chunk_size = 4 * 1024 * 1024
     md5 = hashlib.md5()
     with open(path, "rb") as f:
         while True:
-            chunk = f.read(CHUNK_SIZE)
+            chunk = f.read(chunk_size)
             if not chunk:
                 return md5.hexdigest()
             md5.update(chunk)
@@ -53,7 +53,7 @@ def optimize(folder: Path):
         sub_dir.mkdir(exist_ok=True)
         target = sub_dir.joinpath(file_path.name[2:])
         if target.exists():
-            raise Exception("file exists", target)
+            raise FileExistsError("file exists", target)
         file_path.rename(target)
 
 
@@ -65,7 +65,7 @@ def backup(path: Path, root: Path, filehash: str):
     if target.exists():
         error = f"file {target} exists, cannot backup {path}"
         LOGGER.error(error)
-        raise Exception(error)
+        raise FileExistsError(error)
     shutil.copy(path, target)
     if random.random() < 1/256:
         optimize(target.parent)
@@ -77,3 +77,7 @@ def timestamp2datetime(timestamp: float):
     ).astimezone(
         timezone.get_default_timezone()
     )
+
+
+def to_unix_str(path: Path):
+    return str(path).replace("\\", "/")

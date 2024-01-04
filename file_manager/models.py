@@ -63,14 +63,14 @@ class Object(MPTTModel):
     md5 = models.CharField(max_length=32, db_index=True)
     size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()
-    is_file = models.BooleanField(default=True)
-    is_dir = models.BooleanField(default=False)
+    is_file = models.BooleanField()
+    is_dir = models.BooleanField()
     last_scan = models.DateTimeField(null=True, db_index=True)
     parent = TreeForeignKey(
             "self", null=True, on_delete=models.CASCADE, related_name="children")
 
     def __str__(self):
-        return f"Object[{self.id}]: {self.folder}/{self.path}"
+        return self.name or ""
 
     @classmethod
     def get_or_create_from_path(cls, folder, path: Path):
