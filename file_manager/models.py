@@ -59,7 +59,7 @@ class Object(MPTTModel):
     """
     folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE)
     path = models.TextField("relative path to folder")
-    name = models.CharField(max_length=255, db_index=True, null=True)
+    name = models.CharField(max_length=255, db_index=True)
     md5 = models.CharField(max_length=32, db_index=True)
     size = models.IntegerField(db_index=True)
     update_datetime = models.DateTimeField()

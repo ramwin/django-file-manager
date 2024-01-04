@@ -108,6 +108,7 @@ class Command(BaseCommand):
                     parent=parent_object,
                     is_dir=True,
                     is_file=False,
+                    name=path.name,
                 )
             else:
                 if parent_object and not file_obj.parent:
