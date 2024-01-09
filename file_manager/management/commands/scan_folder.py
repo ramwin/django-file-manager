@@ -99,6 +99,10 @@ class Command(BaseCommand):
                 folder=root_folder,
                 path=path_str,
             ).first()
+            if not file_obj.is_file:
+                file_obj.is_file = True
+                file_obj.is_dir = False
+                file_obj.save()
             if file_obj is None:
                 file_obj = Object.objects.create(
                     folder=root_folder,

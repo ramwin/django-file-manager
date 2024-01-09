@@ -249,4 +249,16 @@ class Backup(models.Model):
         )
 
 
+class Tasks(models.Model):
+    """
+    when a file or folder was updated, it will update it's parent folder
+    """
+    TYPE_CHOICES = (
+            ("update_parent", "update_parent"),
+    )
+    type = models.TextField(choices=TYPE_CHOICES, db_index=True)
+    level = models.IntegerField(default=0)
+    object_id = models.IntegerField(default=0)
+
+
 post_delete.connect(Object.post_delete, Object)
