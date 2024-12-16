@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from dotenv import dotenv_values
+from typing import List
 
 
 CONFIG = dotenv_values()
@@ -28,7 +29,7 @@ SECRET_KEY = 'django-insecure-c_zvy=h7#)820o8m3fo_ia5=*-po1zu=h%+)v5k)3^)k4qhx)%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: List[str] = []
 
 
 # Application definition

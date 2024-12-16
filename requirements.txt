@@ -4,3 +4,4 @@ django-commands
 django-mptt
 django-extensions
 python-dotenv
+django-commands2>=0.15.0

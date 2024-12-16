@@ -57,7 +57,7 @@ class Object(MPTTModel):
     """
     the Object works like a tree. every folder should contains a object whose parent is None
     """
-    folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE)
+    folder = models.ForeignKey(RootFolder, on_delete=models.CASCADE, related_name="+")
     path = models.TextField("relative path to folder")
     name = models.CharField(max_length=255, db_index=True)
     md5 = models.CharField(max_length=32, db_index=True)
@@ -136,7 +136,7 @@ class Object(MPTTModel):
         self.last_scan = now
         self.save()
 
-    def absolute(self):
+    def absolute(self) -> Path:
         return Path(self.folder.path) / self.path  # pylint: disable=no-member
 
     def update_md5(self):
